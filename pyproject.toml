@@ -19,7 +19,7 @@ dependencies = [
     "jupyter>=1.0",
     "pytest>=7.0",
     "pyarrow>=15.0",
-    "streamlit>=1.37",
+    "streamlit>=1.45",
 ]
 
 [tool.pytest.ini_options]
