@@ -1,20 +1,45 @@
-"""Pipeline orchestration for the financial XAI demo."""
+"""Main application entry point for portfolio forecasting."""
 
-from __future__ import annotations
-
-from typing import Any
-
-import pandas as pd
-
-from .dataset import generate_synthetic_market_data
-from .explainability import explain_top_features
-from .model import summarize_model_metrics, train_evaluation_model
+from .pipeline import run_portfolio_forecasting_pipeline
 
 
-def run_financial_xai_demo() -> tuple[dict[str, float], pd.DataFrame]:
-    """Run the full demo pipeline and return metrics and top features."""
-    features, target = generate_synthetic_market_data(n_samples=2000, seed=42)
-    metrics = train_evaluation_model(features, target)
-    summary = summarize_model_metrics(metrics)
-    top_features = explain_top_features(metrics["model"], metrics["X_test"])
-    return summary, top_features
+def main() -> None:
+    """Run the portfolio forecasting pipeline."""
+    print("Starting Financial XAI - Stock & Portfolio Forecasting")
+    print("=" * 50)
+    
+    results = run_portfolio_forecasting_pipeline(
+        data=None,
+        target_return_period=5,
+        model_type="random_forest",
+        return_explanation=True,
+    )
+    
+    # Print results
+    print("\nModel Performance Metrics")
+    print("-" * 50)
+    metrics = results["metrics"]
+    print(f"Accuracy:  {metrics['accuracy']:.4f}")
+    print(f"Precision: {metrics['precision']:.4f}")
+    print(f"Recall:    {metrics['recall']:.4f}")
+    print(f"F1-Score:  {metrics['f1']:.4f}")
+    print(f"ROC AUC:   {metrics['roc_auc']:.4f}")
+    print(f"\nConfusion Matrix:")
+    print(f"  True Positives:  {metrics['true_positives']}")
+    print(f"  True Negatives:  {metrics['true_negatives']}")
+    print(f"  False Positives: {metrics['false_positives']}")
+    print(f"  False Negatives: {metrics['false_negatives']}")
+    
+    if results["feature_importance"] is not None:
+        print("\nTop 10 Most Important Features (by SHAP)")
+        print("-" * 50)
+        print(results["feature_importance"].to_string(index=False))
+    else:
+        print("\nFeature importance could not be computed.")
+    
+    print("\n" + "=" * 50)
+    print("Portfolio forecasting pipeline completed.")
+
+
+if __name__ == "__main__":
+    main()

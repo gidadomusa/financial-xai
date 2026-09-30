@@ -1,4 +1,4 @@
-"""Model training and evaluation utilities."""
+"""Model training and evaluation for portfolio forecasting."""
 
 from __future__ import annotations
 
@@ -6,59 +6,178 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
-from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+    confusion_matrix,
+)
+from sklearn.preprocessing import StandardScaler
 
 
-def train_evaluation_model(
-    features: pd.DataFrame,
-    target: pd.Series,
-    test_size: float = 0.2,
-    random_state: int = 42,
-) -> dict[str, Any]:
-    """Train a baseline random forest model and return evaluation metrics."""
-    X_train, X_test, y_train, y_test = train_test_split(
-        features,
-        target,
-        test_size=test_size,
-        random_state=random_state,
-        stratify=target,
-    )
+class PortfolioModel:
+    """Base class for portfolio forecasting models."""
+    
+    def __init__(self, model_type: str = "random_forest", **kwargs):
+        """Initialize a model.
+        
+        Parameters
+        ----------
+        model_type : str
+            Type of model: "logistic", "random_forest", or "gradient_boosting".
+        **kwargs
+            Additional parameters for the model.
+        """
+        if model_type == "logistic":
+            self.model = LogisticRegression(**kwargs)
+        elif model_type == "random_forest":
+            self.model = RandomForestClassifier(**kwargs)
+        elif model_type == "gradient_boosting":
+            self.model = GradientBoostingClassifier(**kwargs)
+        else:
+            raise ValueError(f"Unknown model type: {model_type}")
+        
+        self.scaler = StandardScaler()
+        self.is_fitted = False
+    
+    def fit(self, X: pd.DataFrame | np.ndarray, y: pd.Series | np.ndarray) -> PortfolioModel:
+        """Fit the model.
+        
+        Parameters
+        ----------
+        X : pd.DataFrame or np.ndarray
+            Feature matrix.
+        y : pd.Series or np.ndarray
+            Target variable.
+            
+        Returns
+        -------
+        self
+        """
+        X_scaled = self.scaler.fit_transform(X)
+        self.model.fit(X_scaled, y)
+        self.is_fitted = True
+        return self
+    
+    def predict(self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
+        """Make predictions.
+        
+        Parameters
+        ----------
+        X : pd.DataFrame or np.ndarray
+            Feature matrix.
+            
+        Returns
+        -------
+        np.ndarray
+            Predictions.
+        """
+        if not self.is_fitted:
+            raise ValueError("Model must be fitted before prediction.")
+        X_scaled = self.scaler.transform(X)
+        return self.model.predict(X_scaled)
+    
+    def predict_proba(self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
+        """Predict probabilities.
+        
+        Parameters
+        ----------
+        X : pd.DataFrame or np.ndarray
+            Feature matrix.
+            
+        Returns
+        -------
+        np.ndarray
+            Class probabilities.
+        """
+        if not self.is_fitted:
+            raise ValueError("Model must be fitted before prediction.")
+        X_scaled = self.scaler.transform(X)
+        return self.model.predict_proba(X_scaled)
 
-    model = RandomForestClassifier(
-        n_estimators=300,
-        max_depth=6,
-        min_samples_leaf=5,
-        random_state=random_state,
-    )
-    model.fit(X_train, y_train)
 
+def evaluate_model(
+    model: PortfolioModel,
+    X_test: pd.DataFrame | np.ndarray,
+    y_test: pd.Series | np.ndarray,
+) -> dict[str, float]:
+    """Evaluate model performance.
+    
+    Parameters
+    ----------
+    model : PortfolioModel
+        Fitted model.
+    X_test : pd.DataFrame or np.ndarray
+        Test features.
+    y_test : pd.Series or np.ndarray
+        Test targets.
+        
+    Returns
+    -------
+    dict[str, float]
+        Evaluation metrics.
+    """
     predictions = model.predict(X_test)
     probabilities = model.predict_proba(X_test)[:, 1]
-
+    
+    cm = confusion_matrix(y_test, predictions)
+    tn, fp, fn, tp = cm.ravel()
+    
     metrics = {
         "accuracy": accuracy_score(y_test, predictions),
         "precision": precision_score(y_test, predictions, zero_division=0),
         "recall": recall_score(y_test, predictions, zero_division=0),
         "f1": f1_score(y_test, predictions, zero_division=0),
         "roc_auc": roc_auc_score(y_test, probabilities),
-        "model": model,
-        "X_test": X_test,
-        "y_test": y_test,
-        "predictions": predictions,
-        "probabilities": probabilities,
+        "true_positives": int(tp),
+        "true_negatives": int(tn),
+        "false_positives": int(fp),
+        "false_negatives": int(fn),
     }
-
+    
     return metrics
 
 
-def summarize_model_metrics(metrics: dict[str, Any]) -> dict[str, float]:
-    """Return a human-readable subset of evaluation metrics."""
-    return {
-        "accuracy": float(metrics["accuracy"]),
-        "precision": float(metrics["precision"]),
-        "recall": float(metrics["recall"]),
-        "f1": float(metrics["f1"]),
-        "roc_auc": float(metrics["roc_auc"]),
-    }
+def compare_models(
+    X_train: pd.DataFrame | np.ndarray,
+    X_test: pd.DataFrame | np.ndarray,
+    y_train: pd.Series | np.ndarray,
+    y_test: pd.Series | np.ndarray,
+) -> dict[str, Any]:
+    """Train and compare multiple models.
+    
+    Parameters
+    ----------
+    X_train, X_test : pd.DataFrame or np.ndarray
+        Training and test features.
+    y_train, y_test : pd.Series or np.ndarray
+        Training and test targets.
+        
+    Returns
+    -------
+    dict[str, Any]
+        Results for each model type.
+    """
+    results = {}
+    
+    model_configs = [
+        ("logistic_regression", {"max_iter": 1000, "random_state": 42}),
+        ("random_forest", {"n_estimators": 300, "max_depth": 8, "random_state": 42}),
+        ("gradient_boosting", {"n_estimators": 300, "learning_rate": 0.1, "random_state": 42}),
+    ]
+    
+    for model_name, params in model_configs:
+        model_type = model_name.split("_")[0]
+        model = PortfolioModel(model_type=model_type, **params)
+        model.fit(X_train, y_train)
+        metrics = evaluate_model(model, X_test, y_test)
+        results[model_name] = {
+            "model": model,
+            "metrics": metrics,
+        }
+    
+    return results
