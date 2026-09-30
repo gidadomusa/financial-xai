@@ -33,6 +33,17 @@ pip install -r requirements.txt
 python -m financial_xai
 ```
 
+## Web dashboard
+
+Install the project and dependencies, then launch the dashboard from the repository root:
+
+```bash
+pip install -e .
+streamlit run src/financial_xai/dashboard.py
+```
+
+The dashboard can train on generated sample data or an uploaded OHLCV CSV. CSV files must include `date`, `asset_id`, `open`, `high`, `low`, `close`, and `volume`, with at least 140 rows per asset. The interface reports time-ordered holdout metrics and global SHAP feature importance.
+
 Or run the notebook workflow:
 
 ```bash
