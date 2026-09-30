@@ -1,35 +1,48 @@
 # Financial XAI
 
-A practical starter project for building explainable AI systems in finance. This repository focuses on a clean pipeline for generating synthetic market data, training a supervised model, and explaining predictions with SHAP.
+A Python-based project for building explainable AI systems in finance. This repository is designed to support research and experimentation around interpretable models for financial forecasting, risk assessment, and decision support.
 
-## What this project includes
+## Project goal
 
-- Synthetic market feature generation for a portfolio or asset-level prediction task
-- A scikit-learn model training pipeline
-- Model evaluation with accuracy, precision, recall, F1, and ROC AUC
-- SHAP-based explanations to interpret the model
-- Easy startup commands for experimentation and extension
+The goal of this project is to build a reliable financial AI workflow that is not only accurate, but also transparent and auditable. We want to answer questions such as:
 
-## Example use case
+- Which features drove a prediction?
+- Which customers or portfolios are risky?
+- What signals indicate higher volatility or lower performance?
+- How can a model be trusted in a regulated financial context?
 
-This starter is designed around a simple binary prediction problem:
+## Why this matters
 
-- Goal: predict whether an asset will deliver a positive future return
-- Input features: return, volatility, momentum, sentiment, volume, spread, liquidity, macro signals
-- Explainability: identify which variables drove the prediction
+In financial applications, accuracy alone is not enough. Decision-makers need to understand the reasons behind predictions. Explainable AI helps support:
 
-This pattern can be extended to:
+- risk management
+- investment decisions
+- credit assessment
+- portfolio monitoring
+- compliance and auditing
 
-- stock return forecasting
-- credit risk classification
-- portfolio stress risk estimation
-- fraud and anomaly detection in financial transactions
+## Core use cases
 
-## Repository structure
+This starter project is built around a financial binary classification use case:
+
+- predict whether an asset will generate a positive future return
+- identify the variables that most influence the prediction
+- compare model performance and interpretation quality
+
+The same structure can be extended to:
+
+- credit risk modeling
+- portfolio stress analysis
+- fraud detection
+- anomaly detection
+- macroeconomic signal forecasting
+
+## Current project structure
 
 ```text
 financial-xai/
 ├── README.md
+├── PROJECT_PLAN.md
 ├── requirements.txt
 ├── pyproject.toml
 ├── .gitignore
@@ -54,6 +67,28 @@ financial-xai/
 └── .venv/
 ```
 
+## Tech stack
+
+- Python 3.10+
+- pandas
+- numpy
+- scikit-learn
+- XGBoost (for later model comparison)
+- SHAP for interpretability
+- matplotlib and seaborn for visualization
+- pytest for testing
+
+## Workflow
+
+This repo follows a simple finance XAI pipeline:
+
+1. Load or generate financial data
+2. Engineer features related to risk, return, momentum, volatility, liquidity, and macro conditions
+3. Train a supervised model
+4. Evaluate metrics such as accuracy, precision, recall, F1, and ROC AUC
+5. Use SHAP to explain predictions
+6. Iterate on model design and feature quality
+
 ## Quick start
 
 ```bash
@@ -63,33 +98,55 @@ pip install -r requirements.txt
 python -m financial_xai
 ```
 
-## Run the demo workflow
+## Demo behavior
 
-The project includes a complete demo pipeline that generates synthetic data, trains a model, evaluates performance, and prints a SHAP feature summary.
+The current version includes a synthetic market dataset and a demo pipeline that:
 
-```bash
-python -m financial_xai
-```
+- creates financial features
+- trains a classification model
+- evaluates performance
+- prints the most important contributing features using SHAP-based attribution
 
-## Dependencies
+## Example output areas
 
-- Python 3.10+
-- numpy
-- pandas
-- scikit-learn
-- shap
-- matplotlib
-- seaborn
-- pytest
+The project is designed to support:
 
-## Recommended next steps
+- model benchmarking notebooks
+- feature importance plots
+- SHAP summary and dependence plots
+- results documentation for stakeholder reviews
+- future API deployment for model serving
 
-1. Replace synthetic data with your real market or portfolio dataset
-2. Add feature engineering for time windows, rolling statistics, and sector effects
-3. Add model comparison across logistic regression, XGBoost, and random forest
-4. Add SHAP summary plots and decision explanations for each prediction
-5. Package the pipeline as an API or dashboard for business users
+## Roadmap
+
+### Phase 1: foundation
+- set up repo structure
+- build data pipeline
+- generate synthetic market examples
+- validate baseline model
+
+### Phase 2: real data integration
+- connect to CSV, parquet, or API-based financial datasets
+- clean and validate data quality
+- engineer rolling features and market signals
+
+### Phase 3: model experimentation
+- compare logistic regression, random forest, XGBoost, and gradient boosting
+- tune model hyperparameters
+- measure business-oriented metrics
+
+### Phase 4: explainability and governance
+- add SHAP summary and local explanations
+- document feature importance logic
+- validate model behavior for fairness and stability
+
+### Phase 5: deployment-ready version
+- package a reusable pipeline
+- add API or dashboard layer
+- integrate monitoring and model retraining workflows
 
 ## Notes
 
-This version is intentionally simple and production-friendly as a starting point for a financial XAI system. It is designed so you can evolve it toward real-world portfolio analytics or risk modeling without reworking the project structure.
+This repository is intentionally designed as a clean, extensible foundation for a financial XAI system. It is well-suited for experimentation, research, and eventual transition into a production-grade decision-support application.
+
+For the detailed execution plan, see `PROJECT_PLAN.md`.
